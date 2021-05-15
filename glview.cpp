@@ -66,16 +66,42 @@ static const char *fragmentShaderSource = R"(
 
     void apply_light(vec3 light_pos) {
         vec3 to_light = normalize(fragment_position - light_pos);
-        color += vec4(max(dot(to_light, fragment_normal), 0.0));
+        color += vec4(0.5,0.5,0.8,1.0)* vec4(max(dot(to_light, fragment_normal), 0.0));
     }
 
 
     void main() {
         color = vec4(0.0);
+//        vec3 light_pos = vec3(0.8);
+
+//        vec4 lightPosition = vec4(0.8,0.8,0.8, 1.0);
+//        vec4 eyePosition = vec4(0.8,0.8,0.8, 1.0);
+//        vec3 eyeVect = normalize(fragment_position.xyz - eyePosition.xyz);
+//        vec3 lightVect = normalize(fragment_position.xyz - lightPosition.xyz);
+//        vec3 reflectLight = normalize(reflect(lightVect,fragment_normal));
+//        float len = length(fragment_position.xyz - eyePosition.xyz);
+//        float specularFactor = 10.0;
+//        float ambientFactor = 0.1;
+
+//        vec4 diffColor = vec4(1.0,1.0,1.0,1.0) * 1 * max(0.0,dot(fragment_normal, -lightVect))
+//        / (1.0 + 0.25 * pow(len,2));
+//        color += diffColor;
+//        vec4 ambientColor = ambientFactor * vec4(1.0,1.0,1.0,1.0);
+//        color += ambientColor;
+//        vec4 specularColor = vec4(1.0,1.0,1.0,1.0) * 1 * pow(max(0.0, dot(reflectLight, -eyeVect)),specularFactor)
+//        / (1.0 + 0.25 * pow(len,2));;
+//        color += specularColor;
+
+
+//        vec3 to_light = normalize(fragment_position - light_pos);
+
+
         apply_light(vec3(0.8));
-        apply_light(vec3(-0.9, 1.2, -1.2));
-        apply_light(vec3(-0.9, -0.2, -1.2));
-        apply_light(vec3(-0.9, -0.2, 1.2));
+        apply_light(vec3(-0.4, 0.8, 0.8));
+
+//        apply_light(vec3(-0.9, 1.2, -1.2));
+//        apply_light(vec3(-0.9, -0.2, -1.2));
+//        apply_light(vec3(-0.9, -0.2, 1.2));
     }
 )";
 
@@ -142,7 +168,7 @@ void glView::paintGL()
 
     QMatrix4x4 proj_matrix;
     if(isPerspectiveOrOrtho){
-        proj_matrix.perspective(60.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+        proj_matrix.perspective(60.0f, 4.0f / 3.0f, 0.1f, 3000.0f);
     }else{
         proj_matrix.ortho(-1.0f,1.0f,-1.0f,1.0f,0.1f,100.0f);
     }
@@ -315,6 +341,23 @@ void glView::paintGL()
         glVertex3f(new_axis_z.x(), new_axis_z.y(), new_axis_z.z());
 
         glEnd();
+
+//        vec3(-0.9, 1.2, -1.2));
+//                apply_light(vec3(-0.9, -0.2, -1.2))
+
+        //QVector4D lightPosition(0.8f,0.8f,0.8f,1.0f);
+        QMatrix4x4 a = proj_matrix * view_matrix;
+        QVector4D lightPositionSource1 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
+        QVector4D lightPositionSource2 = a.map(QVector4D(-0.4f, 0.8f, 0.8f,1.0f));
+        //QVector4D lightPositionSource3 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
+        glPointSize(10);
+        glBegin(GL_POINTS);
+        glColor3f (1.0, 1.0, 1.0);
+        glVertex3f(lightPositionSource1.x(), lightPositionSource1.y(), lightPositionSource1.z());
+        glColor3f (1.0, 1.0, 1.0);
+        glVertex3f(lightPositionSource2.x(), lightPositionSource2.y(), lightPositionSource2.z());
+        glEnd();
+
 
 }
 
