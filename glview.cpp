@@ -11,11 +11,8 @@
 static const char *vertexShaderSource = R"(
     #version 330
     layout (location = 0) in  highp vec4 posAttr;
-    layout (location = 1) in lowp vec4 colAttr;
-    out lowp vec4 col;
     uniform highp mat4 matrix;
     void main() {
-       col = colAttr;
        gl_Position = matrix * posAttr;
     }
 )";
@@ -25,7 +22,6 @@ static const char *geometryShaderSource = R"(
     layout (triangles) in;
     layout (triangle_strip, max_vertices = 3) out;
     in lowp vec4 col[3];
-    out lowp vec4 col2;
     uniform highp mat4 view_matrix;
     uniform highp mat4 proj_matrix;
     out vec3 fragment_normal;
@@ -37,13 +33,12 @@ static const char *geometryShaderSource = R"(
             positions[i] = gl_in[i].gl_Position;
         return positions;
     }
+
     void emit_vertex(vec4 position) {
         gl_Position = proj_matrix * view_matrix * position;
         EmitVertex();
     }
-//    vec3 crop(vec4 v) {
-//        return v.xyz;
-//    }
+
     vec3 calculate_normal(vec4 positions[3]) {
         vec3 a = vec3(positions[2]) - vec3(positions[1]);
         vec3 b = vec3(positions[0]) - vec3(positions[1]);
@@ -54,7 +49,6 @@ static const char *geometryShaderSource = R"(
         vec4 positions[3] = positions_from_gl_in();
         fragment_normal = calculate_normal(positions);
         for (int i = 0; i < 3; i++) {
-            col2 = col[i];
             fragment_position = positions[i].xyz;
             emit_vertex(positions[i]);
         }
@@ -64,7 +58,6 @@ static const char *geometryShaderSource = R"(
 
 static const char *fragmentShaderSource = R"(
     #version 420
-    in lowp vec4 col2;
 //    uniform float intensity;
     uniform vec4 lightColor;
     out vec4 color;
@@ -78,41 +71,11 @@ static const char *fragmentShaderSource = R"(
 
 
     void main() {
-//        light_poses[0] = vec3(0.8);
-//        light_poses[1] = vec3(-0.9, -0.2, -1.2);
-
-
         color = vec4(0.0);
         apply_light(vec3(0.8));
         apply_light(vec3(-0.9, 1.2, -1.2));
         apply_light(vec3(-0.9, -0.2, -1.2));
         apply_light(vec3(-0.9, -0.2, 1.2));
-//        for (int i = 0; i < 1; i++) {
-//            vec3 ligth_poses[] = {
-//                vec3(0.8)
-//            };
-//            vec3 light_pos = light_poses[i];
-//            vec3 to_light = normalize(fragment_position - light_pos);
-
-//            color += vec4(max(dot(to_light, fragment_normal), 0.0));
-//        }
-//        vec3 light_pos = vec3(0.8);
-//        vec3 to_light = normalize(fragment_position - light_pos);
-
-//        float ambientStrength = intensity;
-//        vec4 ambient = ambientStrength * lightColor;
-
-//         color = vec4(dot(to_light, fragment_normal));
-
-
-
-
-
-//        if(intensity!=0.0){
-//           color = ambient * vec4(fragment_normal, 1.0);
-//        }else{
-//           color = vec4(fragment_normal, 1.0);
-//        }
     }
 )";
 
@@ -143,7 +106,7 @@ void glView::initializeGL()
 
     m_posAttr = m_program->attributeLocation("posAttr");
     Q_ASSERT(m_posAttr != -1);
-    m_colAttr = m_program->attributeLocation("colAttr");
+    //m_colAttr = m_program->attributeLocation("colAttr");
     //Q_ASSERT(m_colAttr != -1);
     m_matrixUniform = m_program->uniformLocation("matrix");
     Q_ASSERT(m_matrixUniform != -1);
@@ -310,12 +273,12 @@ void glView::paintGL()
 
 
     glVertexAttribPointer(m_posAttr, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-    glVertexAttribPointer(m_colAttr, 3, GL_FLOAT, GL_FALSE, 0, colors);
+    //glVertexAttribPointer(m_colAttr, 3, GL_FLOAT, GL_FALSE, 0, colors);
 
     glEnableVertexAttribArray(m_posAttr);
-    glEnableVertexAttribArray(m_colAttr);
+    //glEnableVertexAttribArray(m_colAttr);
 
-    glCullFace(GL_FRONT);
+    //glCullFace(GL_FRONT);
     if(isDrawFill){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }else{
@@ -324,7 +287,7 @@ void glView::paintGL()
     glDrawArrays(GL_TRIANGLES, 0, list3.size() * 3);
 
     glDisableVertexAttribArray(m_colAttr);
-    glDisableVertexAttribArray(m_posAttr);
+    //glDisableVertexAttribArray(m_posAttr);
 
     m_program->release();
     ++m_frame;
