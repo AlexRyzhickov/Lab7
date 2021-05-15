@@ -8,37 +8,6 @@
 #include <QtMath>
 
 
-//static const char *vertexShaderSource =
-//    "#version 330\n"
-//    "layout (location = 0) in  highp vec4 posAttr;\n"
-//    "layout (location = 1) in lowp vec4 colAttr;\n"
-//    "out lowp vec4 col;\n"
-//    "uniform highp mat4 matrix;\n"
-//    "uniform highp mat4 view_matrix;\n"
-//    "uniform highp mat4 proj_matrix;\n"
-//    "void main() {\n"
-//    "   col = colAttr;\n"
-//    "   gl_Position = proj_matrix * view_matrix * matrix * posAttr;\n"
-//    "}\n";
-
-//static const char *fragmentShaderSource =
-//    "#version 330\n"
-//    "in lowp vec4 col2;\n"
-//    "uniform float intensity;"
-//    "uniform vec4 lightColor;"
-//    "out vec4 color;"
-//    ""
-//    "void main() {\n"
-//    "float ambientStrength = intensity; \n"
-//    "vec4 ambient = ambientStrength * lightColor; \n"
-//    "\n"
-//    "if(intensity!=0.0){   \n"
-//    "   color = ambient * col2;   \n"
-//    "}else{ \n"
-//    "   color = col2;\n"
-//    "}   \n"
-//    "}\n";
-
 static const char *vertexShaderSource = R"(
     #version 330
     layout (location = 0) in  highp vec4 posAttr;
@@ -146,42 +115,6 @@ static const char *fragmentShaderSource = R"(
 //        }
     }
 )";
-
-
-//static const char *geometryShaderSource =
-//        "#version 330\n"
-
-//        "layout (triangles) in;\n"
-//        "layout (triangle_strip, max_vertices = 3) out;\n"
-//        "in lowp vec4 col;\n"
-//        "out lowp vec4 col2;\n"
-
-////        "vec3[3] positions_from_gl_in() {
-////        "            vec3 positions[3];
-////        "            for (int i = 0; i < 3; i++)
-////        "                positions[i] = gl_in[i].gl_Position.xyz;
-////        ""            return positions;
-////                }
-
-//        "void main()\n"
-//        "{\n"
-//        "    gl_Position = position;\n"
-//        "    col2 = col;\n"
-//        "    EmitVertex();\n"
-//        "}\n";
-
-////        "vec3[3] positions_from_gl_in() {;\n"
-////        "            vec3 positions[3];  \n"
-////        "            for (int i = 0; i < 3; i++)\n"
-////        "                positions[i] = gl_in[i].gl_Position.xyz;\n"
-////        "            return positions;\n"
-////        "        }\n"
-
-////    "layout (triangles) in;\n"
-////    "layout (triangle_strip, max_vertices = 3) out;\n"
-////    "void main() {\n"
-////    "EmitVertex();\n"
-////    "}\n";
 
 glView::glView(QWidget *parent)
 {
