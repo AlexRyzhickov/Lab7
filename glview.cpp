@@ -61,6 +61,9 @@ static const char *fragmentShaderSource = R"(
 //    uniform float intensity;
     uniform vec3 view_position;
     uniform vec4 lightColor;
+    uniform vec3 diffuse_color;
+    uniform vec3 ambient_light;
+    uniform vec3 specular_color;
     out vec4 color;
     in vec3 fragment_normal;
     in vec3 fragment_position;
@@ -75,62 +78,29 @@ static const char *fragmentShaderSource = R"(
         color = vec4(0.0);
 
         vec3 light_position = vec3(0.8,0.8,0.8);
-        //vec3 view_position = vec3(0.8,0.8,0.8);
-
+//        vec3 diffuse_color = vec3();
+//        vec3 ambient_light = vec3();
+//        vec3 specular_color = vec3();
+        vec3 light_color = vec3(1.0,1.0,1.0);
 
         float light_distance = length(light_position - fragment_position);
         float attenuation = 1.0 / (light_distance * light_distance);
-        vec3 light = vec3(1.0,1.0,1.0) * attenuation;
+        vec3 light = light_color * attenuation;
 
         vec3 to_light = normalize(light_position - fragment_position);
         vec3 normal = fragment_normal;
 
-        vec3 ambient = vec3(0.07568, 0.61424, 0.07568) * vec3(0.0215,0.1745,	0.0215);
+        vec3 ambient = diffuse_color * ambient_light ;
 
         float diffuse_strength = max(dot(normal, to_light), 0.0);
-        vec3 diffuse = diffuse_strength * vec3(0.07568,	0.61424, 0.07568) * light;
+        vec3 diffuse = diffuse_strength * diffuse_color * light;
 
         vec3 view_direction = normalize(view_position - fragment_position);
         vec3 halfway_direction = normalize(to_light + view_direction);
         float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), 0.6);
-        vec3 specular = specular_strength * vec3(0.633,	0.727811, 0.633) * light;
+        vec3 specular = specular_strength * specular_color * light;
 
         color = vec4(ambient + diffuse + specular, 1.0);
-
-
-
-
-//        vec3 light_pos = vec3(0.8);
-
-//        vec4 lightPosition = vec4(0.8,0.8,0.8, 1.0);
-//        vec4 eyePosition = vec4(0.8,0.8,0.8, 1.0);
-//        vec3 eyeVect = normalize(fragment_position.xyz - eyePosition.xyz);
-//        vec3 lightVect = normalize(fragment_position.xyz - lightPosition.xyz);
-//        vec3 reflectLight = normalize(reflect(lightVect,fragment_normal));
-//        float len = length(fragment_position.xyz - eyePosition.xyz);
-//        float specularFactor = 10.0;
-//        float ambientFactor = 0.1;
-
-//        vec4 diffColor = vec4(1.0,1.0,1.0,1.0) * 1 * max(0.0,dot(fragment_normal, -lightVect))
-//        / (1.0 + 0.25 * pow(len,2));
-//        color += diffColor;
-//        vec4 ambientColor = ambientFactor * vec4(1.0,1.0,1.0,1.0);
-//        color += ambientColor;
-//        vec4 specularColor = vec4(1.0,1.0,1.0,1.0) * 1 * pow(max(0.0, dot(reflectLight, -eyeVect)),specularFactor)
-//        / (1.0 + 0.25 * pow(len,2));;
-//        color += specularColor;
-
-
-//        vec3 to_light = normalize(fragment_position - light_pos);
-
-
-//        apply_light(vec3(0.8));
-//        apply_light(vec3(-0.4, 0.8, 0.8));
-//        apply_light(vec3(0.0, 0.9, 0.0));
-
-//        apply_light(vec3(-0.9, 1.2, -1.2));
-//        apply_light(vec3(-0.9, -0.2, -1.2));
-//        apply_light(vec3(-0.9, -0.2, 1.2));
     }
 )";
 
@@ -171,6 +141,12 @@ void glView::initializeGL()
     Q_ASSERT(p_matrixUniform != -1);
     view_position = m_program->uniformLocation("view_position");
     Q_ASSERT(view_position != -1);
+    diffuse_color = m_program->uniformLocation("diffuse_color");
+    Q_ASSERT(diffuse_color != -1);
+    ambient_light = m_program->uniformLocation("ambient_light");
+    Q_ASSERT(ambient_light != -1);
+    specular_color = m_program->uniformLocation("specular_color");
+    Q_ASSERT(specular_color != -1);
 //    intensityUniform = m_program->uniformLocation("intensity");
 //    Q_ASSERT(intensityUniform != -1);
 //    lightColorUniform = m_program->uniformLocation("lightColor");
@@ -237,6 +213,9 @@ void glView::paintGL()
     m_program->setUniformValue(intensityUniform, intensity);
     glUniform4f(lightColorUniform,color->red(),color->green(),color->blue(),color->alpha());
     glUniform3f(view_position,vector.x(),vector.y(),vector.z());
+    glUniform3f(diffuse_color,0.07568,0.61424,0.07568);
+    glUniform3f(ambient_light,0.0215,0.1745,0.0215);
+    glUniform3f(specular_color,0.633,0.727811, 0.633);
 
     int countVertex = split_step;
 

@@ -36,6 +36,9 @@ private:
   GLint intensityUniform = 0;
   GLint lightColorUniform = 0;
   GLint view_position = 0;
+  GLint diffuse_color = 0;
+  GLint ambient_light = 0;
+  GLint specular_color = 0;
   QOpenGLShaderProgram *m_program = nullptr;
   int m_frame = 0;
 public:
