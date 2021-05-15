@@ -35,6 +35,7 @@ private:
   GLint p_matrixUniform = 0;
   GLint intensityUniform = 0;
   GLint lightColorUniform = 0;
+  GLint view_position = 0;
   QOpenGLShaderProgram *m_program = nullptr;
   int m_frame = 0;
 public:

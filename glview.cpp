@@ -59,6 +59,7 @@ static const char *geometryShaderSource = R"(
 static const char *fragmentShaderSource = R"(
     #version 420
 //    uniform float intensity;
+    uniform vec3 view_position;
     uniform vec4 lightColor;
     out vec4 color;
     in vec3 fragment_normal;
@@ -72,10 +73,10 @@ static const char *fragmentShaderSource = R"(
 
     void main() {
         color = vec4(0.0);
-        //fragment_normal = fragment_normal * (-1.0);
 
         vec3 light_position = vec3(0.8,0.8,0.8);
-        vec3 view_position = vec3(0.8,0.8,0.8);
+        //vec3 view_position = vec3(0.8,0.8,0.8);
+
 
         float light_distance = length(light_position - fragment_position);
         float attenuation = 1.0 / (light_distance * light_distance);
@@ -168,6 +169,8 @@ void glView::initializeGL()
     Q_ASSERT(v_matrixUniform != -1);
     p_matrixUniform = m_program->uniformLocation("proj_matrix");
     Q_ASSERT(p_matrixUniform != -1);
+    view_position = m_program->uniformLocation("view_position");
+    Q_ASSERT(view_position != -1);
 //    intensityUniform = m_program->uniformLocation("intensity");
 //    Q_ASSERT(intensityUniform != -1);
 //    lightColorUniform = m_program->uniformLocation("lightColor");
@@ -186,11 +189,12 @@ void glView::resizeGL(int w, int h)
 
 void glView::paintGL()
 {
+    glEnable(GL_DEPTH_TEST);
 
     const qreal retinaScale = devicePixelRatio();
     glViewport(0, 0, width() * retinaScale, height() * retinaScale);
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     m_program->bind();
 
@@ -232,6 +236,7 @@ void glView::paintGL()
     m_program->setUniformValue(m_matrixUniform, matrix);
     m_program->setUniformValue(intensityUniform, intensity);
     glUniform4f(lightColorUniform,color->red(),color->green(),color->blue(),color->alpha());
+    glUniform3f(view_position,vector.x(),vector.y(),vector.z());
 
     int countVertex = split_step;
 
@@ -289,11 +294,11 @@ void glView::paintGL()
 
     for (int i=0; i<countVertex; i++) {
        if (i+1==countVertex){
-            list3.push_back(new Triangle(list.at(i),list.at(0),list2.at(i)));
-            list3.push_back(new Triangle(list2.at(i),list.at(0),list2.at(0)));
+            list3.push_back(new Triangle(list2.at(i),list.at(0),list.at(i)));
+            list3.push_back(new Triangle(list2.at(i),list2.at(0),list.at(0)));
        }else{
-            list3.push_back(new Triangle(list.at(i),list.at(i+1),list2.at(i)));
-            list3.push_back(new Triangle(list2.at(i),list.at(i+1),list2.at(i+1)));
+            list3.push_back(new Triangle(list2.at(i),list.at(i+1),list.at(i)));
+            list3.push_back(new Triangle(list2.at(i),list2.at(i+1),list.at(i+1)));
        }
     }
 
