@@ -72,6 +72,33 @@ static const char *fragmentShaderSource = R"(
 
     void main() {
         color = vec4(0.0);
+        //fragment_normal = fragment_normal * (-1.0);
+
+        vec3 light_position = vec3(0.8,0.8,0.8);
+        vec3 view_position = vec3(0.8,0.8,0.8);
+
+        float light_distance = length(light_position - fragment_position);
+        float attenuation = 1.0 / (light_distance * light_distance);
+        vec3 light = vec3(1.0,1.0,1.0) * attenuation;
+
+        vec3 to_light = normalize(light_position - fragment_position);
+        vec3 normal = fragment_normal;
+
+        vec3 ambient = vec3(0.07568, 0.61424, 0.07568) * vec3(0.0215,0.1745,	0.0215);
+
+        float diffuse_strength = max(dot(normal, to_light), 0.0);
+        vec3 diffuse = diffuse_strength * vec3(0.07568,	0.61424, 0.07568) * light;
+
+        vec3 view_direction = normalize(view_position - fragment_position);
+        vec3 halfway_direction = normalize(to_light + view_direction);
+        float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), 0.6);
+        vec3 specular = specular_strength * vec3(0.633,	0.727811, 0.633) * light;
+
+        color = vec4(ambient + diffuse + specular, 1.0);
+
+
+
+
 //        vec3 light_pos = vec3(0.8);
 
 //        vec4 lightPosition = vec4(0.8,0.8,0.8, 1.0);
@@ -96,8 +123,9 @@ static const char *fragmentShaderSource = R"(
 //        vec3 to_light = normalize(fragment_position - light_pos);
 
 
-        apply_light(vec3(0.8));
-        apply_light(vec3(-0.4, 0.8, 0.8));
+//        apply_light(vec3(0.8));
+//        apply_light(vec3(-0.4, 0.8, 0.8));
+//        apply_light(vec3(0.0, 0.9, 0.0));
 
 //        apply_light(vec3(-0.9, 1.2, -1.2));
 //        apply_light(vec3(-0.9, -0.2, -1.2));
@@ -348,14 +376,14 @@ void glView::paintGL()
         //QVector4D lightPosition(0.8f,0.8f,0.8f,1.0f);
         QMatrix4x4 a = proj_matrix * view_matrix;
         QVector4D lightPositionSource1 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
-        QVector4D lightPositionSource2 = a.map(QVector4D(-0.4f, 0.8f, 0.8f,1.0f));
+        //QVector4D lightPositionSource2 = a.map(QVector4D(0.0f, 0.9f, 0.0f,1.0f));
         //QVector4D lightPositionSource3 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
         glPointSize(10);
         glBegin(GL_POINTS);
         glColor3f (1.0, 1.0, 1.0);
         glVertex3f(lightPositionSource1.x(), lightPositionSource1.y(), lightPositionSource1.z());
-        glColor3f (1.0, 1.0, 1.0);
-        glVertex3f(lightPositionSource2.x(), lightPositionSource2.y(), lightPositionSource2.z());
+//        glColor3f (1.0, 1.0, 1.0);
+//        glVertex3f(lightPositionSource2.x(), lightPositionSource2.y(), lightPositionSource2.z());
         glEnd();
 
 
