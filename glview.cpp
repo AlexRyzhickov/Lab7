@@ -65,6 +65,7 @@ static const char *fragmentShaderSource = R"(
     uniform vec3 diffuse_color;
     uniform vec3 ambient_light;
     uniform vec3 specular_color;
+    uniform vec3 light_position;
     uniform float shininess;
     out vec4 color;
     in vec3 fragment_normal;
@@ -79,7 +80,7 @@ static const char *fragmentShaderSource = R"(
     void main() {
         color = vec4(0.0);
 
-        vec3 light_position = vec3(0.8,0.8,0.8);
+//        vec3 light_position = vec3(0.8,0.8,0.8);
 //        vec3 diffuse_color = vec3();
 //        vec3 ambient_light = vec3();
 //        vec3 specular_color = vec3();
@@ -117,6 +118,7 @@ void glView::initializeGL()
 {
 
     material = new Material();
+    light_position = new QVector3D(0.8f,0.8f,0.8f);
     initializeOpenGLFunctions();
 
     m_program = new QOpenGLShaderProgram(this);
@@ -152,6 +154,8 @@ void glView::initializeGL()
     Q_ASSERT(specular_color != -1);
     shininess = m_program->uniformLocation("shininess");
     Q_ASSERT(shininess != -1);
+    light_positionUniform = m_program->uniformLocation("light_position");
+    Q_ASSERT(light_positionUniform != -1);
 //    intensityUniform = m_program->uniformLocation("intensity");
 //    Q_ASSERT(intensityUniform != -1);
 //    lightColorUniform = m_program->uniformLocation("lightColor");
@@ -222,6 +226,7 @@ void glView::paintGL()
     glUniform3f(ambient_light,material->ambient_light.x(),material->ambient_light.y(),material->ambient_light.z());
     glUniform3f(specular_color,material->specular_color.x(),material->specular_color.y(),material->specular_color.z());
     m_program->setUniformValue(shininess, material->shininess);
+    glUniform3f(light_positionUniform,light_position->x(),light_position->y(),light_position->z());
 
     int countVertex = split_step;
 

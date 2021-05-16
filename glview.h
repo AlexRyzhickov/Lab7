@@ -41,6 +41,8 @@ private:
   GLint ambient_light = 0;
   GLint specular_color = 0;
   GLint shininess = 0;
+  GLint light_positionUniform = 0;
+  QVector3D *light_position = nullptr;
   QOpenGLShaderProgram *m_program = nullptr;
   int m_frame = 0;
   Material *material = nullptr;
