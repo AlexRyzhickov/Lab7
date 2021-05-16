@@ -26,12 +26,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     glview.cpp \
+    material.cpp \
     triangle.cpp \
     vertex.cpp
 
 HEADERS += \
     glview.h \
         mainwindow.h \
+    material.h \
     triangle.h \
     vertex.h
 

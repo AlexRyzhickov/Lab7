@@ -6,6 +6,7 @@
 #include <QOpenGLShaderProgram>
 #include <QScreen>
 #include <QtMath>
+#include <material.h>
 
 
 static const char *vertexShaderSource = R"(
@@ -64,6 +65,7 @@ static const char *fragmentShaderSource = R"(
     uniform vec3 diffuse_color;
     uniform vec3 ambient_light;
     uniform vec3 specular_color;
+    uniform float shininess;
     out vec4 color;
     in vec3 fragment_normal;
     in vec3 fragment_position;
@@ -97,7 +99,7 @@ static const char *fragmentShaderSource = R"(
 
         vec3 view_direction = normalize(view_position - fragment_position);
         vec3 halfway_direction = normalize(to_light + view_direction);
-        float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), 0.6);
+        float specular_strength = pow(max(dot(normal, halfway_direction), 0.0), shininess);
         vec3 specular = specular_strength * specular_color * light;
 
         color = vec4(ambient + diffuse + specular, 1.0);
@@ -114,6 +116,7 @@ glView::glView(QWidget *parent)
 void glView::initializeGL()
 {
 
+    material = new Material();
     initializeOpenGLFunctions();
 
     m_program = new QOpenGLShaderProgram(this);
@@ -147,6 +150,8 @@ void glView::initializeGL()
     Q_ASSERT(ambient_light != -1);
     specular_color = m_program->uniformLocation("specular_color");
     Q_ASSERT(specular_color != -1);
+    shininess = m_program->uniformLocation("shininess");
+    Q_ASSERT(shininess != -1);
 //    intensityUniform = m_program->uniformLocation("intensity");
 //    Q_ASSERT(intensityUniform != -1);
 //    lightColorUniform = m_program->uniformLocation("lightColor");
@@ -213,31 +218,32 @@ void glView::paintGL()
     m_program->setUniformValue(intensityUniform, intensity);
     glUniform4f(lightColorUniform,color->red(),color->green(),color->blue(),color->alpha());
     glUniform3f(view_position,vector.x(),vector.y(),vector.z());
-    glUniform3f(diffuse_color,0.07568,0.61424,0.07568);
-    glUniform3f(ambient_light,0.0215,0.1745,0.0215);
-    glUniform3f(specular_color,0.633,0.727811, 0.633);
+    glUniform3f(diffuse_color,material->diffuse_color.x(),material->diffuse_color.y(),material->diffuse_color.z());
+    glUniform3f(ambient_light,material->ambient_light.x(),material->ambient_light.y(),material->ambient_light.z());
+    glUniform3f(specular_color,material->specular_color.x(),material->specular_color.y(),material->specular_color.z());
+    m_program->setUniformValue(shininess, material->shininess);
 
     int countVertex = split_step;
 
     GLfloat vertices[countVertex * 2 * 3 * 3];
     GLfloat colors[countVertex * 2 * 3 * 3];
 
-    QList<Vertex*> list;
-    QList<Vertex*> list2;
-    QList<Triangle*> list3;
+    QList<Vertex*> vertexes_low_face;
+    QList<Vertex*> vertexes_high_face;
+    QList<Triangle*> triangles;
     float r = radius_low_face;
 
     int count = 0;
     for (double degrees = 0; degrees < 360; degrees=degrees+360/countVertex) {
         double radians = qDegreesToRadians(degrees);
         if(count==0){
-            list.push_back(new Vertex(0.0f,y_low_face, r, radians, 1.0f, 0.0f, 0.0f,1.0f));
+            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 1.0f, 0.0f, 0.0f,1.0f));
         }
         if(count==1){
-            list.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 1.0f, 0.0f,1.0f));
+            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 1.0f, 0.0f,1.0f));
         }
         if(count==2){
-            list.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 0.0f, 1.0f,1.0f));
+            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 0.0f, 1.0f,1.0f));
         }
         count++;
         if(count==3){
@@ -257,13 +263,13 @@ void glView::paintGL()
         double radians = qDegreesToRadians(degrees);
         //list2.push_back(new Vertex(start_x,0.4f, start_z, radians, 1.0f, 0.0f, 0.0f,1.0f));
         if(count==0){
-            list2.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.7f, 0.4f, 0.0f,1.0f));
+            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.7f, 0.4f, 0.0f,1.0f));
         }
         if(count==1){
-            list2.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.4f, 1.0f, 0.0f,1.0f));
+            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.4f, 1.0f, 0.0f,1.0f));
         }
         if(count==2){
-            list2.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.0f, 7.0f, 1.0f,1.0f));
+            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.0f, 7.0f, 1.0f,1.0f));
         }
         count++;
         if(count==3){
@@ -273,40 +279,40 @@ void glView::paintGL()
 
     for (int i=0; i<countVertex; i++) {
        if (i+1==countVertex){
-            list3.push_back(new Triangle(list2.at(i),list.at(0),list.at(i)));
-            list3.push_back(new Triangle(list2.at(i),list2.at(0),list.at(0)));
+            triangles.push_back(new Triangle(vertexes_high_face.at(i),vertexes_low_face.at(0),vertexes_low_face.at(i)));
+            triangles.push_back(new Triangle(vertexes_high_face.at(i),vertexes_high_face.at(0),vertexes_low_face.at(0)));
        }else{
-            list3.push_back(new Triangle(list2.at(i),list.at(i+1),list.at(i)));
-            list3.push_back(new Triangle(list2.at(i),list2.at(i+1),list.at(i+1)));
+            triangles.push_back(new Triangle(vertexes_high_face.at(i),vertexes_low_face.at(i+1),vertexes_low_face.at(i)));
+            triangles.push_back(new Triangle(vertexes_high_face.at(i),vertexes_high_face.at(i+1),vertexes_low_face.at(i+1)));
        }
     }
 
 
 
-    for (int i = 0; i < list3.size(); i++) {
-            vertices[i*9 + 0] = list3.at(i)->getVertex_one()->getX();
-            vertices[i*9 + 1] = list3.at(i)->getVertex_one()->getY();
-            vertices[i*9 + 2] = list3.at(i)->getVertex_one()->getZ();
+    for (int i = 0; i < triangles.size(); i++) {
+            vertices[i*9 + 0] = triangles.at(i)->getVertex_one()->getX();
+            vertices[i*9 + 1] = triangles.at(i)->getVertex_one()->getY();
+            vertices[i*9 + 2] = triangles.at(i)->getVertex_one()->getZ();
 
-            vertices[i*9 + 3] = list3.at(i)->getVertex_two()->getX();
-            vertices[i*9 + 4] = list3.at(i)->getVertex_two()->getY();
-            vertices[i*9 + 5] = list3.at(i)->getVertex_two()->getZ();
+            vertices[i*9 + 3] = triangles.at(i)->getVertex_two()->getX();
+            vertices[i*9 + 4] = triangles.at(i)->getVertex_two()->getY();
+            vertices[i*9 + 5] = triangles.at(i)->getVertex_two()->getZ();
 
-            vertices[i*9 + 6] = list3.at(i)->getVertex_three()->getX();
-            vertices[i*9 + 7] = list3.at(i)->getVertex_three()->getY();
-            vertices[i*9 + 8] = list3.at(i)->getVertex_three()->getZ();
+            vertices[i*9 + 6] = triangles.at(i)->getVertex_three()->getX();
+            vertices[i*9 + 7] = triangles.at(i)->getVertex_three()->getY();
+            vertices[i*9 + 8] = triangles.at(i)->getVertex_three()->getZ();
 
-            colors[i*9 + 0] = list3.at(i)->getVertex_one()->getRed();
-            colors[i*9 + 1] = list3.at(i)->getVertex_one()->getGreen();
-            colors[i*9 + 2] = list3.at(i)->getVertex_one()->getBlue();
+            colors[i*9 + 0] = triangles.at(i)->getVertex_one()->getRed();
+            colors[i*9 + 1] = triangles.at(i)->getVertex_one()->getGreen();
+            colors[i*9 + 2] = triangles.at(i)->getVertex_one()->getBlue();
 
-            colors[i*9 + 3] = list3.at(i)->getVertex_two()->getRed();
-            colors[i*9 + 4] = list3.at(i)->getVertex_two()->getGreen();
-            colors[i*9 + 5] = list3.at(i)->getVertex_two()->getBlue();
+            colors[i*9 + 3] = triangles.at(i)->getVertex_two()->getRed();
+            colors[i*9 + 4] = triangles.at(i)->getVertex_two()->getGreen();
+            colors[i*9 + 5] = triangles.at(i)->getVertex_two()->getBlue();
 
-            colors[i*9 + 6] = list3.at(i)->getVertex_three()->getRed();
-            colors[i*9 + 7] = list3.at(i)->getVertex_three()->getGreen();
-            colors[i*9 + 8] = list3.at(i)->getVertex_three()->getBlue();
+            colors[i*9 + 6] = triangles.at(i)->getVertex_three()->getRed();
+            colors[i*9 + 7] = triangles.at(i)->getVertex_three()->getGreen();
+            colors[i*9 + 8] = triangles.at(i)->getVertex_three()->getBlue();
     }
 
 
@@ -322,7 +328,7 @@ void glView::paintGL()
     }else{
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    glDrawArrays(GL_TRIANGLES, 0, list3.size() * 3);
+    glDrawArrays(GL_TRIANGLES, 0, triangles.size() * 3);
 
     glDisableVertexAttribArray(m_colAttr);
     //glDisableVertexAttribArray(m_posAttr);

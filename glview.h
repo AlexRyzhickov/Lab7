@@ -9,6 +9,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 #include <triangle.h>
+#include <Material.h>
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -39,8 +40,10 @@ private:
   GLint diffuse_color = 0;
   GLint ambient_light = 0;
   GLint specular_color = 0;
+  GLint shininess = 0;
   QOpenGLShaderProgram *m_program = nullptr;
   int m_frame = 0;
+  Material *material = nullptr;
 public:
   int split_step = 3;
   float radius_high_face = 0.4f;
@@ -67,7 +70,6 @@ public:
   float intensity = 0;
   QColor *color = nullptr;
 public slots:
-
 
 };
 
