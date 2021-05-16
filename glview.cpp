@@ -195,10 +195,10 @@ void glView::paintGL()
     view_matrix_eye.rotate(camera_rotation_x, 1, 0, 0);
     view_matrix_eye.rotate(camera_rotation_y, 0, 1, 0);
     view_matrix_eye.rotate(camera_rotation_z, 0, 0, 1);
-    view_matrix_eye.translate(camera_translate_x, camera_translate_y, camera_translate_z);
+    //view_matrix_eye.translate(camera_translate_x, camera_translate_y, camera_translate_z);
 
 
-    QVector3D vector(0.8f,0.8f,0.8f);
+    QVector3D vector(0.8f + camera_translate_x,0.8f + camera_translate_y,0.8f + camera_translate_z);
 
     QVector3D eye = view_matrix_eye.map(vector);
 
