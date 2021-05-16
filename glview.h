@@ -9,7 +9,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLFunctions>
 #include <triangle.h>
-#include <Material.h>
+#include <material.h>
 
 QT_BEGIN_NAMESPACE
 class QPainter;
@@ -25,7 +25,7 @@ public:
   void resizeGL(int w, int h)override;
   void paintGL()override;
 private:
-   void initShaders();
+
 private:
   QTimer mpTimer;
 
@@ -42,10 +42,9 @@ private:
   GLint specular_color = 0;
   GLint shininess = 0;
   GLint light_positionUniform = 0;
-  QVector3D *light_position = nullptr;
   QOpenGLShaderProgram *m_program = nullptr;
   int m_frame = 0;
-  Material *material = nullptr;
+
 public:
   int split_step = 3;
   float radius_high_face = 0.4f;
@@ -71,6 +70,8 @@ public:
   bool isDrawFill = false;
   float intensity = 0;
   QColor *color = nullptr;
+  Material *material = nullptr;
+  QVector3D *light_position = nullptr;
 public slots:
 
 };

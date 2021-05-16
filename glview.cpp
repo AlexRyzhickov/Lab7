@@ -370,7 +370,7 @@ void glView::paintGL()
 
         //QVector4D lightPosition(0.8f,0.8f,0.8f,1.0f);
         QMatrix4x4 a = proj_matrix * view_matrix;
-        QVector4D lightPositionSource1 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
+        QVector4D lightPositionSource1 = a.map(QVector4D(light_position->x(),light_position->y(),light_position->z(),1.0f));
         //QVector4D lightPositionSource2 = a.map(QVector4D(0.0f, 0.9f, 0.0f,1.0f));
         //QVector4D lightPositionSource3 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
         glPointSize(10);
@@ -381,17 +381,6 @@ void glView::paintGL()
 //        glVertex3f(lightPositionSource2.x(), lightPositionSource2.y(), lightPositionSource2.z());
         glEnd();
 
-
-}
-
-void glView::initShaders()
-{
-    if(!m_program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/vshader"))
-        close();
-    if(!m_program->addShaderFromSourceFile(QOpenGLShader::Fragment,":/fshader"))
-        close();
-    if(!m_program->link())
-        close();
 
 }
 
