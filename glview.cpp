@@ -59,9 +59,9 @@ static const char *geometryShaderSource = R"(
 
 static const char *fragmentShaderSource = R"(
     #version 420
-//    uniform float intensity;
+    uniform float intensity;
     uniform vec3 view_position;
-    uniform vec4 lightColor;
+    uniform vec3 lightColor;
     uniform vec3 diffuse_color;
     uniform vec3 ambient_light;
     uniform vec3 specular_color;
@@ -71,20 +71,9 @@ static const char *fragmentShaderSource = R"(
     in vec3 fragment_normal;
     in vec3 fragment_position;
 
-    void apply_light(vec3 light_pos) {
-        vec3 to_light = normalize(fragment_position - light_pos);
-        color += vec4(0.5,0.5,0.8,1.0)* vec4(max(dot(to_light, fragment_normal), 0.0));
-    }
-
-
     void main() {
         color = vec4(0.0);
-
-//        vec3 light_position = vec3(0.8,0.8,0.8);
-//        vec3 diffuse_color = vec3();
-//        vec3 ambient_light = vec3();
-//        vec3 specular_color = vec3();
-        vec3 light_color = vec3(1.0,1.0,1.0);
+        vec3 light_color = lightColor * intensity;
 
         float light_distance = length(light_position - fragment_position);
         float attenuation = 1.0 / (light_distance * light_distance);
@@ -109,7 +98,7 @@ static const char *fragmentShaderSource = R"(
 
 glView::glView(QWidget *parent)
 {
-  color = new QColor(255,255,0,255);
+  color = new QColor(255,255,255,255);
   connect(&mpTimer, SIGNAL(timeout()), this, SLOT(repaint()));
   mpTimer.start(33);
 }
@@ -127,17 +116,8 @@ void glView::initializeGL()
     m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
     m_program->link();
 
-//    if(!m_program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/vshader.vsh"))
-//        close();
-//    if(!m_program->addShaderFromSourceFile(QOpenGLShader::Fragment,":/fshader.fsh"))
-//        close();
-//    if(!m_program->link())
-//        close();
-
     m_posAttr = m_program->attributeLocation("posAttr");
     Q_ASSERT(m_posAttr != -1);
-    //m_colAttr = m_program->attributeLocation("colAttr");
-    //Q_ASSERT(m_colAttr != -1);
     m_matrixUniform = m_program->uniformLocation("matrix");
     Q_ASSERT(m_matrixUniform != -1);
     v_matrixUniform = m_program->uniformLocation("view_matrix");
@@ -156,10 +136,10 @@ void glView::initializeGL()
     Q_ASSERT(shininess != -1);
     light_positionUniform = m_program->uniformLocation("light_position");
     Q_ASSERT(light_positionUniform != -1);
-//    intensityUniform = m_program->uniformLocation("intensity");
-//    Q_ASSERT(intensityUniform != -1);
-//    lightColorUniform = m_program->uniformLocation("lightColor");
-//    Q_ASSERT(lightColorUniform != -1);
+    intensityUniform = m_program->uniformLocation("intensity");
+    Q_ASSERT(intensityUniform != -1);
+    lightColorUniform = m_program->uniformLocation("lightColor");
+    Q_ASSERT(lightColorUniform != -1);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 }
@@ -195,9 +175,6 @@ void glView::paintGL()
     view_matrix_eye.rotate(camera_rotation_x, 1, 0, 0);
     view_matrix_eye.rotate(camera_rotation_y, 0, 1, 0);
     view_matrix_eye.rotate(camera_rotation_z, 0, 0, 1);
-    //view_matrix_eye.translate(camera_translate_x, camera_translate_y, camera_translate_z);
-
-
     QVector3D vector(0.8f + camera_translate_x,0.8f + camera_translate_y,0.8f + camera_translate_z);
 
     QVector3D eye = view_matrix_eye.map(vector);
@@ -220,7 +197,7 @@ void glView::paintGL()
     m_program->setUniformValue(v_matrixUniform, view_matrix);
     m_program->setUniformValue(m_matrixUniform, matrix);
     m_program->setUniformValue(intensityUniform, intensity);
-    glUniform4f(lightColorUniform,color->red(),color->green(),color->blue(),color->alpha());
+    glUniform3f(lightColorUniform,color->red()/255,color->green()/255,color->blue()/255);
     glUniform3f(view_position,vector.x(),vector.y(),vector.z());
     glUniform3f(diffuse_color,material->diffuse_color.x(),material->diffuse_color.y(),material->diffuse_color.z());
     glUniform3f(ambient_light,material->ambient_light.x(),material->ambient_light.y(),material->ambient_light.z());
@@ -231,29 +208,15 @@ void glView::paintGL()
     int countVertex = split_step;
 
     GLfloat vertices[countVertex * 2 * 3 * 3];
-    GLfloat colors[countVertex * 2 * 3 * 3];
 
     QList<Vertex*> vertexes_low_face;
     QList<Vertex*> vertexes_high_face;
     QList<Triangle*> triangles;
     float r = radius_low_face;
 
-    int count = 0;
     for (double degrees = 0; degrees < 360; degrees=degrees+360/countVertex) {
         double radians = qDegreesToRadians(degrees);
-        if(count==0){
-            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 1.0f, 0.0f, 0.0f,1.0f));
-        }
-        if(count==1){
-            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 1.0f, 0.0f,1.0f));
-        }
-        if(count==2){
-            vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 0.0f, 0.0f, 1.0f,1.0f));
-        }
-        count++;
-        if(count==3){
-            count=0;
-        }
+        vertexes_low_face.push_back(new Vertex(0.0f,y_low_face, r, radians, 1.0f, 1.0f, 1.0f,1.0f));
     }
 
     r = radius_high_face;
@@ -263,23 +226,9 @@ void glView::paintGL()
     float start_x = r * sin(offsetAngle);
     float start_z = r * cos(offsetAngle);
 
-    count = 0;
     for (double degrees = 0; degrees < 360; degrees=degrees+360/countVertex) {
         double radians = qDegreesToRadians(degrees);
-        //list2.push_back(new Vertex(start_x,0.4f, start_z, radians, 1.0f, 0.0f, 0.0f,1.0f));
-        if(count==0){
-            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.7f, 0.4f, 0.0f,1.0f));
-        }
-        if(count==1){
-            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.4f, 1.0f, 0.0f,1.0f));
-        }
-        if(count==2){
-            vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 0.0f, 7.0f, 1.0f,1.0f));
-        }
-        count++;
-        if(count==3){
-            count=0;
-        }
+        vertexes_high_face.push_back(new Vertex(start_x,y_high_face, start_z, radians, 1.0f, 1.0f, 1.0f,1.0f));
     }
 
     for (int i=0; i<countVertex; i++) {
@@ -305,27 +254,13 @@ void glView::paintGL()
 
             vertices[i*9 + 6] = triangles.at(i)->getVertex_three()->getX();
             vertices[i*9 + 7] = triangles.at(i)->getVertex_three()->getY();
-            vertices[i*9 + 8] = triangles.at(i)->getVertex_three()->getZ();
-
-            colors[i*9 + 0] = triangles.at(i)->getVertex_one()->getRed();
-            colors[i*9 + 1] = triangles.at(i)->getVertex_one()->getGreen();
-            colors[i*9 + 2] = triangles.at(i)->getVertex_one()->getBlue();
-
-            colors[i*9 + 3] = triangles.at(i)->getVertex_two()->getRed();
-            colors[i*9 + 4] = triangles.at(i)->getVertex_two()->getGreen();
-            colors[i*9 + 5] = triangles.at(i)->getVertex_two()->getBlue();
-
-            colors[i*9 + 6] = triangles.at(i)->getVertex_three()->getRed();
-            colors[i*9 + 7] = triangles.at(i)->getVertex_three()->getGreen();
-            colors[i*9 + 8] = triangles.at(i)->getVertex_three()->getBlue();
+            vertices[i*9 + 8] = triangles.at(i)->getVertex_three()->getZ();           
     }
 
 
     glVertexAttribPointer(m_posAttr, 3, GL_FLOAT, GL_FALSE, 0, vertices);
-    //glVertexAttribPointer(m_colAttr, 3, GL_FLOAT, GL_FALSE, 0, colors);
 
     glEnableVertexAttribArray(m_posAttr);
-    //glEnableVertexAttribArray(m_colAttr);
 
     //glCullFace(GL_FRONT);
     if(isDrawFill){
@@ -336,7 +271,6 @@ void glView::paintGL()
     glDrawArrays(GL_TRIANGLES, 0, triangles.size() * 3);
 
     glDisableVertexAttribArray(m_colAttr);
-    //glDisableVertexAttribArray(m_posAttr);
 
     m_program->release();
     ++m_frame;
@@ -365,20 +299,12 @@ void glView::paintGL()
 
         glEnd();
 
-//        vec3(-0.9, 1.2, -1.2));
-//                apply_light(vec3(-0.9, -0.2, -1.2))
-
-        //QVector4D lightPosition(0.8f,0.8f,0.8f,1.0f);
-        QMatrix4x4 a = proj_matrix * view_matrix;
-        QVector4D lightPositionSource1 = a.map(QVector4D(light_position->x(),light_position->y(),light_position->z(),1.0f));
-        //QVector4D lightPositionSource2 = a.map(QVector4D(0.0f, 0.9f, 0.0f,1.0f));
-        //QVector4D lightPositionSource3 = a.map(QVector4D(0.8f,0.8f,0.8f,1.0f));
+        QMatrix4x4 mul_matrixes = proj_matrix * view_matrix;
+        QVector4D lightPositionSource1 = mul_matrixes.map(QVector4D(light_position->x(),light_position->y(),light_position->z(),1.0f));
         glPointSize(10);
         glBegin(GL_POINTS);
-        glColor3f (1.0, 1.0, 1.0);
+        glColor3f (color->red()/255, color->green()/255, color->blue()/255);
         glVertex3f(lightPositionSource1.x(), lightPositionSource1.y(), lightPositionSource1.z());
-//        glColor3f (1.0, 1.0, 1.0);
-//        glVertex3f(lightPositionSource2.x(), lightPositionSource2.y(), lightPositionSource2.z());
         glEnd();
 
 

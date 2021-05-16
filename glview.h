@@ -68,7 +68,7 @@ public:
   float camera_translate_z = 0.0f;
   bool isPerspectiveOrOrtho = true;
   bool isDrawFill = false;
-  float intensity = 0;
+  float intensity = 1;
   QColor *color = nullptr;
   Material *material = nullptr;
   QVector3D *light_position = nullptr;

@@ -34,8 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
   connect(ui->perspective_btn,SIGNAL(toggled(bool)),SLOT(changeSettings()));
   connect(ui->fillMode,SIGNAL(stateChanged(int)),SLOT(changeSettings()));
-//  connect(ui->intensity,SIGNAL(valueChanged(double)),SLOT(changeSettings()));
-//  connect(ui->colorPicker,SIGNAL(clicked(bool)),SLOT(openColorPicker()));
+  connect(ui->intensity,SIGNAL(valueChanged(double)),SLOT(changeSettings()));
+  connect(ui->colorPicker,SIGNAL(clicked(bool)),SLOT(openColorPicker()));
 
   connect(ui->light_pos_x,SIGNAL(valueChanged(double)),SLOT(changeSettings()));
   connect(ui->light_pos_y,SIGNAL(valueChanged(double)),SLOT(changeSettings()));
@@ -96,7 +96,7 @@ void MainWindow::changeSettings()
         ui->openGLWidget->isDrawFill = false;
     }
 
-    //ui->openGLWidget->intensity = ui->intensity->value();
+    ui->openGLWidget->intensity = ui->intensity->value();
     ui->openGLWidget->light_position->setX(ui->light_pos_x->value());
     ui->openGLWidget->light_position->setY(ui->light_pos_y->value());
     ui->openGLWidget->light_position->setZ(ui->light_pos_z->value());
